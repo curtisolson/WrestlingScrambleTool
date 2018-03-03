@@ -1,21 +1,21 @@
-var rosterWrestlerID         = 0;
-var rosterSchool             = 1;
-var rosterFName              = 2;
-var rosterLName              = 3;
-var rosterGrade              = 4;
-var rosterWeight             = 5;
-var rosterExp                = 6;
-var rosterGender             = 7;
-var rosterMatchCount         = 8;
-var rosterBoutNumber         = 9;
-var rosterMatchOpponentID    = 10;
-var rosterMatchOpponent      = 11;
-var rosterMatchOpponentShort = 12;
-var rosterExpPercent         = 13;
-var rosterExpSortPercent     = 14;
-var rosterRound              = 15;
-var rosterMatchNumber        = 16;
-var rosterLastPrintedBout    = 17;
+var rosterWrestlerID          = 0;
+var rosterSchool              = 1;
+var rosterFName               = 2;
+var rosterLName               = 3;
+var rosterGrade               = 4;
+var rosterWeight              = 5;
+var rosterExp                 = 6;
+var rosterGender              = 7;
+var rosterMatchCount          = 8;
+var rosterBoutNumber          = 9;
+var rosterMatchOpponentID     = 10;
+var rosterMatchOpponentSchool = 11;
+var rosterMatchOpponentShort  = 12;
+var rosterExpPercent          = 13;
+var rosterExpSortPercent      = 14;
+var rosterRound               = 15;
+var rosterMatchNumber         = 16;
+var rosterLastPrintedBout     = 17;
 var matchSet            = 0;
 var matchNumber         = 1;
 var matchSchool1        = 2;
@@ -38,6 +38,7 @@ var matchExpPercent     = 18;
 var matchExpSortPercent = 19;
 var matchWrestlerID1    = 20;
 var matchWrestlerID2    = 21;
+var matchBoutNumber     = 22;
 var teamSchool = 0;
 var teamFName  = 1;
 var teamLName  = 2;
@@ -64,6 +65,7 @@ function getSetting(settingId, defaultValue) {
   }
   return defaultValue; 
 }
+
 function createMatchUps() {
 //  Logger.clear();
   Logger.log("Start createMatchUps");
@@ -87,6 +89,7 @@ function createMatchUps() {
   
  
   combinedRosterData = combineTeamRosters(mainSheet, scrambleNotes);
+//  combinedRosterData.sort(compareWeight);
   
   var counter = 0;
  
@@ -128,7 +131,7 @@ function createMatchUps() {
         
     if (expDiffPercent >= 1-gWAELimit && weightDiffPercent <= gWeightLimit) {
       matchNumber++;
-      matchData.push([' ', matchNumber, smallWrestler[rosterSchool], smallWrestler[rosterFName], smallWrestler[rosterLName], smallWrestler[rosterGrade], smallWrestler[rosterWeight], smallWrestler[rosterExp], smallWrestler[rosterGender], bigWrestler[rosterSchool], bigWrestler[rosterFName], bigWrestler[rosterLName], bigWrestler[rosterGrade], bigWrestler[rosterWeight], bigWrestler[rosterExp], bigWrestler[rosterGender], weightDiff, weightDiffPercent, expDiffPercent, expDiffSortPercent, smallWrestler[rosterWrestlerID], bigWrestler[rosterWrestlerID]]);
+      matchData.push([' ', matchNumber, smallWrestler[rosterSchool], smallWrestler[rosterFName], smallWrestler[rosterLName], smallWrestler[rosterGrade], smallWrestler[rosterWeight], smallWrestler[rosterExp], smallWrestler[rosterGender], bigWrestler[rosterSchool], bigWrestler[rosterFName], bigWrestler[rosterLName], bigWrestler[rosterGrade], bigWrestler[rosterWeight], bigWrestler[rosterExp], bigWrestler[rosterGender], weightDiff, weightDiffPercent, expDiffPercent, expDiffSortPercent, smallWrestler[rosterWrestlerID], bigWrestler[rosterWrestlerID], '']);
       counter++;
     }
   }
@@ -142,20 +145,22 @@ function createMatchUps() {
   matchData.splice(0, 1);
 
   updateRunStatus('Choosing bouts from candidate matches.', mainSheet);
-  var returnArray = pickMatchUps(combinedRosterData, matchData);
+  var returnArray = pickMatchUps2(combinedRosterData, matchData, boutSheets, mainSheet);
   combinedRosterData = returnArray[0];
   matchData = returnArray[1];
   // write selected matches
   writeMatchesSheet(matches, matchData);
 
   //  create Bout Sheet;
-  combinedRosterData=createBoutSheets(combinedRosterData, matchData, boutSheets, mainSheet);
+//  combinedRosterData=createBoutSheets(combinedRosterData, matchData, boutSheets, mainSheet);
 
   // Update Roster with new columns
+//  combinedRosterData.sort(compareSchoolGradeWeight);
+
   writeCombinedRosterSheet(combinedRoster, combinedRosterData, schoolData);
 
 
-  getMatchStats(combinedRosterData, mainSheet);
+  getMatchStats(combinedRosterData, matchData, mainSheet);
 
 
   updateRunStatus('Run complete', mainSheet);
@@ -168,28 +173,33 @@ function validateData(mainSheet, team1, team2, team3, team4) {
 
 }
 
-function getMatchStats(combinedRosterData, mainSheet) {
+function getMatchStats(combinedRosterData, matchData, mainSheet) {
   Logger.log("Start getMatchStats");
   
 /*  
-  var rosterWrestlerID         = 0;
-var rosterSchool             = 1;
-var rosterFName              = 2;
-var rosterLName              = 3;
-var rosterGrade              = 4;
-var rosterWeight             = 5;
-var rosterExp                = 6;
-var rosterGender             = 7;
-var rosterMatchCount         = 8;
-var rosterBoutNumber         = 9;
-var rosterMatchOpponentID    = 10;
-var rosterMatchOpponent      = 11;
-var rosterMatchOpponentShort = 12;
-var rosterExpPercent         = 13;
-var rosterExpSortPercent     = 14;
-var rosterRound              = 15;
-var rosterMatchNumber        = 16;
-var rosterLastPrintedBout    = 17;
+var matchSet            = 0;
+var matchNumber         = 1;
+var matchSchool1        = 2;
+var matchFName1         = 3;
+var matchLName1         = 4;
+var matchGrade1         = 5;
+var matchWeight1        = 6;
+var matchExp1           = 7;
+var matchGender1        = 8;
+var matchSchool2        = 9;
+var matchFName2         = 10;
+var matchLName2         = 11;
+var matchGrade2         = 12;
+var matchWeight2        = 13;
+var matchExp2           = 14;
+var matchGender2        = 15;
+var matchWeightDiff     = 16;
+var matchWeightPercent  = 17;
+var matchExpPercent     = 18;
+var matchExpSortPercent = 19;
+var matchWrestlerID1    = 20;
+var matchWrestlerID2    = 21;
+
 */
   
   var lastRound1Bout=0;
@@ -199,6 +209,10 @@ var rosterLastPrintedBout    = 17;
   var wrestlesThrice=0;
   var wrestlesThriceArray=[];
   var round1Count=0;
+  var weight1=0, weight2=0, weight3=0, weight4=0, weight5=0;
+  var gradeSame=0, gradeDiff1=0, gradeDiff2=0;
+  var genderSame=0, genderDiff=0;
+  var schoolSame=0, schoolDiff=0;
 
   for (var i = 0; i < combinedRosterData.length; i++) {
     rosterBoutNumberSorted = combinedRosterData[i][rosterBoutNumber];
@@ -230,7 +244,63 @@ var rosterLastPrintedBout    = 17;
   updateRunStatus('Wrestlest thrice: ' + wrestlesThrice, mainSheet);
   updateRunStatus('Wrestlest thrice: ' + wrestlesThriceArray, mainSheet);
   
-  
+  for (var i = 0; i < matchData.length; i++) {
+    switch (Math.abs(matchData[i][matchGrade1] - matchData[i][matchGrade2])) {
+      case 0:
+        gradeSame++;
+        break;
+      case 1:
+        gradeDiff1++;
+        break;
+      case 2:
+        gradeDiff2++;
+        break;
+    }
+    switch (matchData[i][matchGender1] === matchData[i][matchGender2]) {
+      case true:
+        genderSame++;
+        break;
+      case false:
+        genderDiff++;
+        break;
+    }
+    switch (matchData[i][matchSchool1] === matchData[i][matchSchool2]) {
+      case true:
+        schoolSame++;
+        break;
+      case false:
+        schoolDiff++;
+        break;
+    }
+    switch (Math.ceil(matchData[i][matchWeightPercent]*100/5)) {
+      case 1:
+        weight1++;
+        break;
+      case 2:
+        weight2++;
+        break;
+      case 3:
+        weight3++;
+        break;
+      case 4:
+        weight4++;
+        break;
+      case 5:
+        weight5++;
+        break;
+    }
+  }
+
+  updateRunStatus('WEIGHT', mainSheet);
+  updateRunStatus('  0-5%: ' + weight1, mainSheet);
+  updateRunStatus('  6-10%: ' + weight2, mainSheet);
+  updateRunStatus('  11-25%: ' + weight3, mainSheet);
+  updateRunStatus('  16-20%: ' + weight4, mainSheet);
+  updateRunStatus('  21-25%: ' + weight5, mainSheet);
+  updateRunStatus('GENDER Same: ' + genderSame + ' Diff: ' + genderDiff, mainSheet);
+  updateRunStatus('GRADE Same: ' + gradeSame + ' Diff (1yr): ' + gradeDiff1 + ' Diff (2yr): ' + gradeDiff2, mainSheet);
+  updateRunStatus('SCHOOL Diff: ' + schoolDiff + ' Same: ' + schoolSame, mainSheet);
+
   
   Logger.log("End getMatchStats");
 }
@@ -394,18 +464,12 @@ function createBoutSheets(combinedRosterData, matchData, boutSheets, mainSheet) 
 
   while (matchList.length > 0) {
     for (var ii = 0; ii < matchList.length; ii++) {
-      Logger.log('==1');
-      Logger.log(matchList);
-//      Logger.log(matchList[i][ii]);
-//      Logger.log(matchList[i][ii][0]);
       for (var iii = 0; iii < matchData.length; iii++) {
-//      Logger.log('==2');
 
         if (matchList[ii][0] === matchData[iii][matchNumber]) {
           matchRow = matchData[iii];
         }
       }
-//      Logger.log(matchRow);
       if (matchedWrestlerList.indexOf(matchRow[matchWrestlerID1]) === -1 &&
           matchedWrestlerList.indexOf(matchRow[matchWrestlerID2]) === -1) {
         matchedWrestlerList.push(matchRow[matchWrestlerID1]);
@@ -502,26 +566,15 @@ function createBoutSheets(combinedRosterData, matchData, boutSheets, mainSheet) 
   return combinedRosterData;
 }
 
-function compareNumbers(a, b) {
-  return a - b;
-}
-
-function compareMatchByRound(a, b) {
-  if (a[0] === b[0]) {
-    return 0;
-  }
-  return (a[1] < b[1]) ? 1 : -1;
-}
-
 function writeMatchesSheet(matches, matchData) {
   Logger.log("Start writeMatchesSheet");
   matches.clear({ formatOnly: false, contentsOnly: true });
-  var matchRange = matches.getRange(1, 1, matchData.length, 22);
+  var matchRange = matches.getRange(1, 1, matchData.length, 23);
   matchRange.setValues(matchData);
   matches.sort(matchExpSortPercent+1, false);
   matches.insertRows(1);
-  var header = matches.getRange("A1:V1");
-  header.setValues([[' ', '#','School', 'First Name', 'Last Name', 'Grade', 'Weight', 'Experience', 'Gender', 'School', 'First Name', 'Last Name', 'Grade', 'Weight', 'Experience', 'Gender', 'Weight Diff', 'Weight Diff %', 'Exp Diff %', 'Exp Sort', 'Wrestler ID', 'Wrestler ID']]);
+  var header = matches.getRange("A1:W1");
+  header.setValues([[' ', '#','School', 'First Name', 'Last Name', 'Grade', 'Weight', 'Experience', 'Gender', 'School', 'First Name', 'Last Name', 'Grade', 'Weight', 'Experience', 'Gender', 'Weight Diff', 'Weight Diff %', 'Exp Diff %', 'Exp Sort', 'Wrestler ID', 'Wrestler ID', 'Bout Number']]);
   Logger.log("End writeMatchesSheet");
 }
 
@@ -713,7 +766,8 @@ function formatWrestlerText(combinedRosterRow) {
     }
   }
   wrestlerText += '('+combinedRosterRow[rosterSchool]+') ';
-  wrestlerText += combinedRosterRow[rosterFName]+' '+combinedRosterRow[rosterLName];
+  wrestlerText += combinedRosterRow[rosterFName]+' '+combinedRosterRow[rosterLName]+'\n';
+  wrestlerText += combinedRosterRow[rosterGrade].toString()+'/'+combinedRosterRow[rosterWeight].toString()+'/'+combinedRosterRow[rosterExp].toString()+'/'+combinedRosterRow[rosterGender];
 
   wrestlerTextShort += '('+schoolTextShort+') ';
   wrestlerTextShort += combinedRosterRow[rosterFName][0]+' '+combinedRosterRow[rosterLName]+' ';
@@ -726,60 +780,122 @@ function formatWrestlerText(combinedRosterRow) {
 function pickMatchUps2(combinedRosterData, matchData, boutSheets, mainSheet) {
   Logger.log("Start pickMatchUps2");
   
-/*  
-var rosterWrestlerID         = 0;
-var rosterSchool             = 1;
-var rosterFName              = 2;
-var rosterLName              = 3;
-var rosterGrade              = 4;
-var rosterWeight             = 5;
-var rosterExp                = 6;
-var rosterGender             = 7;
-var rosterMatchCount         = 8;
-var rosterBoutNumber         = 9;
-var rosterMatchOpponentID    = 10;
-var rosterMatchOpponent      = 11;
-var rosterMatchOpponentShort = 12;
-var rosterExpPercent         = 13;
-var rosterExpSortPercent     = 14;
-var rosterRound              = 15;
-var rosterMatchNumber        = 16;
-var rosterLastPrintedBout    = 17;
-*/
-  var wrestlerIds=[];
-
-  for (var i = 0; i < combinedRosterData.length; i++) {
-    wrestlerIds.push(combinedRosterData[i][rosterWrestlerID]);
-  }
-
-
-
+//  var wrestlerIds=[];
+//    wrestlerIds.push(combinedRosterData[i][rosterWrestlerID]);
+  var matchCounts=[[0,0],[0,1],[0,2],[1,1],[1,2],[2,2]];
+  var wrestlerText;
+  var schoolTextShort;
+  var wrestlerTextShort;
+  var opponentText;
+  var opponentSchoolTextShort;
+  var opponentTextShort;
+  var boutSheetData = [];
+  var boutNumber = 0;
+  var pickRound = 'not needed';
+  var rowsPerBout = 6;
+  var boutsPerPage = 4;
+  var wrestlerMatched = false;
   
-  var opponentID;
-  var opponentsOpponentID;
-  // 2 loops. on first, get everyone at least one good first match. on next, make best matches.
-  for (var i = 0; i < matchData.length; i++) {
-    if (!(combinedRosterData[matchData[i][matchWrestlerID1]-1][rosterMatchCount] === 3 || 
-          combinedRosterData[matchData[i][matchWrestlerID2]-1][rosterMatchCount] === 3) &&
-      (combinedRosterData[matchData[i][matchWrestlerID1]-1][rosterMatchCount] === 0 || 
-      combinedRosterData[matchData[i][matchWrestlerID2]-1][rosterMatchCount] === 0)) {
+  for (var i = 0; i < matchCounts.length; i++) {
+    //Find wrestler with low match count
+    for (var ii = 0; ii < combinedRosterData.length; ii++) {
+      wrestlerMatched = false;
+      if (matchCounts[i][0] === combinedRosterData[ii][rosterMatchCount]) {
+        Logger.log('Found wrestler ' + combinedRosterData[ii][rosterWrestlerID] + ' ' + matchCounts[i][0]);
+        // Find match for that wrestler
+        for (var iii = 0; iii < matchData.length; iii++) {
 
-      combinedRosterData = setMatch(combinedRosterData, matchData[i], 0);
-      matchData[i][matchSet] = 'X';
-    }  
+          if ((combinedRosterData[ii][rosterWrestlerID] === matchData[iii][matchWrestlerID1] || 
+               combinedRosterData[ii][rosterWrestlerID] === matchData[iii][matchWrestlerID2]) &&
+               matchData[iii][matchSet] !== 'X') {
+            Logger.log('Found match ' + matchData[iii][matchNumber]);
+            //Find opponent with correct match count
+            for (var iiii = 0; iiii < combinedRosterData.length; iiii++) {
+              if (((combinedRosterData[ii][rosterWrestlerID] === matchData[iii][matchWrestlerID1] &&
+                    combinedRosterData[iiii][rosterWrestlerID] === matchData[iii][matchWrestlerID2]) || 
+                   (combinedRosterData[iiii][rosterWrestlerID] === matchData[iii][matchWrestlerID1] &&
+                    combinedRosterData[ii][rosterWrestlerID] === matchData[iii][matchWrestlerID2]))  &&
+                   matchCounts[i][1] === combinedRosterData[iiii][rosterMatchCount]) {
+            Logger.log('Found opponent ' + combinedRosterData[iiii][rosterWrestlerID] + ' ' + matchCounts[i][1]);
+                
+                wrestlerMatched = true;
+                boutNumber++;
+                // Update match
+                matchData[iii][matchBoutNumber] = boutNumber;
+                matchData[iii][matchSet] = 'X';
+                
+                // combinedRosterData[ii] = Wrestler
+                // combinedRosterData[iiii] = Opponent
+                
+                [wrestlerText, wrestlerTextShort, schoolTextShort] = formatWrestlerText(combinedRosterData[ii]);
+                [opponentText, opponentTextShort, opponentSchoolTextShort] = formatWrestlerText(combinedRosterData[iiii]);
+                //Update Wrestler
+                combinedRosterData[ii][rosterMatchCount]++;
+                combinedRosterData[ii][rosterMatchOpponentID].push(combinedRosterData[iiii][rosterWrestlerID]);
+                combinedRosterData[ii][rosterMatchOpponentSchool].push(combinedRosterData[iiii][rosterSchool]);
+                combinedRosterData[ii][rosterMatchOpponentShort].push(opponentTextShort);                     
+                combinedRosterData[ii][rosterBoutNumber].push(boutNumber);
+                combinedRosterData[ii][rosterMatchNumber].push(matchData[iii][matchNumber]);
+                combinedRosterData[ii][rosterExpPercent].push(matchData[iii][matchExpPercent]);
+                combinedRosterData[ii][rosterExpSortPercent].push(matchData[iii][matchExpSortPercent]);
+                combinedRosterData[ii][rosterRound].push(pickRound);
+
+                //Update Opponent
+                combinedRosterData[iiii][rosterMatchCount]++;
+                combinedRosterData[iiii][rosterMatchOpponentID].push(combinedRosterData[ii][rosterWrestlerID]);
+                combinedRosterData[iiii][rosterMatchOpponentSchool].push(combinedRosterData[ii][rosterSchool]);
+                combinedRosterData[iiii][rosterMatchOpponentShort].push(wrestlerTextShort);
+                combinedRosterData[iiii][rosterBoutNumber].push(boutNumber);
+                combinedRosterData[iiii][rosterMatchNumber].push(matchData[iii][matchNumber]);
+                combinedRosterData[iiii][rosterExpPercent].push(matchData[iii][matchExpPercent]);
+                combinedRosterData[iiii][rosterExpSortPercent].push(matchData[iii][matchExpSortPercent]);
+                combinedRosterData[iiii][rosterRound].push(pickRound);
+
+                boutSheetData.push(['B#', 'Name']);
+                boutSheetData.push([boutNumber, wrestlerText]);
+                boutSheetData.push(['','']);
+                boutSheetData.push(['','']);
+                boutSheetData.push(['', opponentTextShort]);
+                boutSheetData.push(['','']);
+                
+                break;
+              }
+            } 
+          }
+          if (wrestlerMatched) break;
+        }
+      }
+    }
   }
-  for (var i = 0; i < matchData.length; i++) {
-    if (matchData[i][matchSet] !== 'X' &&
-       (!(combinedRosterData[matchData[i][matchWrestlerID1]-1][rosterMatchCount] === 3 || 
-          combinedRosterData[matchData[i][matchWrestlerID2]-1][rosterMatchCount] === 3))) {
-      combinedRosterData = setMatch(combinedRosterData, matchData[i], 0);
-      matchData[i][matchSet] = 'X';
-    }  
-  }
+
+Logger.log(combinedRosterData);
+  
+  // Write bout sheet data
+Logger.log('====');
+  var boutSheetRange = boutSheets.getRange(1, 1, 960, 2).clearContent();
+Logger.log('====');
+  boutSheets.unhideRow(boutSheetRange);
+Logger.log(boutSheetData.length);
+  var boutSheetRange = boutSheets.getRange(1, 1, boutSheetData.length, 2);
+Logger.log('====');
+  boutSheetRange.setValues(boutSheetData);
+Logger.log('====');
+  
+  // visible area should be header, all bouts + 1 page of blank bouts
+  
+  var blankBoutsOnLastPage = boutsPerPage - (boutNumber % boutsPerPage);
+  // print all abouts + remainder of page + 1 blank page.
+  var rowsToPrint = (boutNumber+blankBoutsOnLastPage+boutsPerPage)*rowsPerBout;
+  boutSheets.hideRows(rowsToPrint, 960-rowsToPrint);
+Logger.log('====');
+  
+  updateRunStatus('Created '+boutNumber.toString()+' bout sheets.', mainSheet);
+Logger.log('====');
 
   Logger.log("End pickMatchUps2");
-  return [combinedRosterData, matchData];}
-
+  return [combinedRosterData, matchData];
+}
+    
 function pickMatchUps(combinedRosterData, matchData) {
   Logger.log("Start pickMatchUps");
   var opponentID;
@@ -830,7 +946,7 @@ function setMatch(combinedRosterData, matchDataRow, pickRound) {
     opponentTextShort=opponentTextShort.replace(")","]");
   }
   combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterMatchOpponentID].push(matchWrestlerID2);
-  combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterMatchOpponent].push(opponentText);
+  combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterMatchOpponentSchool].push(matchDataRow[matchSchool2]);
   combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterMatchOpponentShort].push(opponentTextShort);
   combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterMatchNumber].push(matchDataRow[matchNumber]);
   combinedRosterData[matchDataRow[matchWrestlerID1]-1][rosterExpPercent].push(matchDataRow[matchExpPercent]);
@@ -845,7 +961,7 @@ function setMatch(combinedRosterData, matchDataRow, pickRound) {
     opponentTextShort=opponentTextShort.replace(")","]");
   }
   combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterMatchOpponentID].push(matchWrestlerID1);
-  combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterMatchOpponent].push(opponentText);
+  combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterMatchOpponentSchool].push(matchDataRow[matchSchool1]);
   combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterMatchOpponentShort].push(opponentTextShort);
   combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterMatchNumber].push(matchDataRow[matchNumber]);
   combinedRosterData[matchDataRow[matchWrestlerID2]-1][rosterExpPercent].push(matchDataRow[matchExpPercent]);
@@ -865,3 +981,63 @@ function lookupWrestler(wrestlerID, combinedRosterData) {
   } 
 //  Logger.log("End lookupWrestler");
 } 
+
+
+//
+//   Sort Callback Functions
+//   
+function compareNumbers(a, b) {
+  return a - b;
+}
+
+function compareSchoolGradeWeight(a, b) {
+  if ((a[rosterSchool] <  b[rosterSchool]) ||
+      (a[rosterSchool] ===  b[rosterSchool] &&
+       a[rosterGrade] <  b[rosterGrade]) ||
+      (a[rosterSchool] ===  b[rosterSchool] &&
+       a[rosterGrade] ===  b[rosterGrade]&&
+       a[rosterWeight] <  b[rosterWeight])) {
+    return -1;
+  } else if ((a[rosterSchool] >  b[rosterSchool]) ||
+      (a[rosterSchool] ===  b[rosterSchool] &&
+       a[rosterGrade] >  b[rosterGrade]) ||
+      (a[rosterSchool] ===  b[rosterSchool] &&
+       a[rosterGrade] ===  b[rosterGrade]&&
+       a[rosterWeight] >  b[rosterWeight])) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+function compareMatchCountWeight(a, b) {
+  if ((a[rosterMatchCount] <  b[rosterMatchCount]) ||
+      (a[rosterMatchCount] ===  b[rosterMatchCount] &&
+       a[rosterWeight] <  b[rosterWeight])) {
+    return -1;
+  } else if ((a[rosterMatchCount] >  b[rosterMatchCount]) ||
+     (a[rosterMatchCount] ===  b[rosterMatchCount] &&
+      a[rosterWeight] >  b[rosterWeight])) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+function compareWeight(a, b) {
+  if (a[rosterWeight] <  b[rosterWeight]) {
+    return -1;
+  } else if (a[rosterWeight] >  b[rosterWeight]) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+function compareMatchByRound(a, b) {
+  if (a[0] === b[0]) {
+    return 0;
+  }
+  return (a[1] < b[1]) ? 1 : -1;
+}
+
